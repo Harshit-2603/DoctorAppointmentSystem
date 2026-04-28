@@ -1,56 +1,79 @@
+using AppointmentSystem.Data.Data;
+using AppointmentSystem.Models;
+using AppointmentSystem.Models.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
-using AppointmentSystem.Data.Data;
-using AppointmentSystem.Models.Models;
 
 namespace DoctorAppointmentSystem
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // 1. Connection String Configuration
             var connectionString = builder.Configuration
                 .GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-            // 2. DbContext Registration
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            // 3. Identity Configuration - Fixed for ApplicationUser and int keys
-            // This fix addresses the "No service for type UserManager" error
             builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = false;
-                options.Password.RequireDigit = false;
-                options.Password.RequiredLength = 6;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders()
             .AddDefaultUI();
 
-            // 4. MediatR Registration
-            // This is required to make the Handlers in AppointmentSystem.Services work
-            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
-                typeof(Program).Assembly,
-                // Explicitly pointing to a handler in your Services project ensures all handlers are found
-                typeof(AppointmentSystem.Services.Handlers.AdminFeatures.CreateUserHandler).Assembly
-            ));
-
             builder.Services.AddControllersWithViews();
             builder.Services.AddRazorPages();
 
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AppointmentSystem.Services.Handlers.AdminFeatures.GenerateSlotsHandler).Assembly));
+
             var app = builder.Build();
 
-            // 5. Middleware Pipeline
+            // ── Seed Admin at runtime ──────────────────────
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+                var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
+
+                // Create Admin role if it doesn't exist
+                if (!await roleManager.RoleExistsAsync("Admin"))
+                {
+                    await roleManager.CreateAsync(new IdentityRole<int> { Name = "Admin" });
+                }
+
+                // Create Admin user if it doesn't exist
+                var adminEmail = "admin@system.com";
+                var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+                if (adminUser == null)
+                {
+                    var newAdmin = new ApplicationUser
+                    {
+                        UserName = adminEmail,
+                        Email = adminEmail,
+                        FullName = "System Admin",
+                        Role = UserRole.Admin,
+                        EmailConfirmed = true
+                    };
+
+                    var result = await userManager.CreateAsync(newAdmin, "Admin@123");
+
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(newAdmin, "Admin");
+                    }
+                }
+            }
+            // ───────────────────────────────────────────────
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseMigrationsEndPoint();
@@ -62,19 +85,17 @@ namespace DoctorAppointmentSystem
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
-
             app.UseRouting();
-
-            // Authentication must come BEFORE Authorization
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
-
-            app.MapRazorPages();
+                pattern: "{controller=Home}/{action=Index}/{id?}")
+                .WithStaticAssets();
+            app.MapRazorPages()
+               .WithStaticAssets();
 
             app.Run();
         }

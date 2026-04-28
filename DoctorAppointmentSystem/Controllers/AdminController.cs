@@ -28,14 +28,17 @@ public class AdminController : Controller
     public IActionResult Create() => View();
 
     [HttpPost]
+    
     public async Task<IActionResult> Create(CreateUserCommand command)
     {
+        if (!ModelState.IsValid) return View(command);
+
         var result = await _mediator.Send(command);
         if (result) return RedirectToAction(nameof(Index));
-        ModelState.AddModelError("", "User creation failed.");
-        return View();
-    }
 
+        ModelState.AddModelError("", "User creation failed. Check password requirements: min 6 chars, uppercase, digit, special character.");
+        return View(command);
+    }
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {

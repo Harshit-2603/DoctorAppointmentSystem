@@ -1,9 +1,9 @@
 using AppointmentSystem.Data.Data;
+using AppointmentSystem.Models;
 using AppointmentSystem.Models.Contracts.CommandRequests.Admin;
 using AppointmentSystem.Models.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using System.Numerics;
 
 namespace AppointmentSystem.Services.Handlers.AdminFeatures
 {
@@ -29,16 +29,32 @@ namespace AppointmentSystem.Services.Handlers.AdminFeatures
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
-            if (result.Succeeded)
+
+            if (!result.Succeeded) return false;
+
+            // Map enum to exact role name string matching what was seeded
+            var roleName = request.Role switch
             {
-                if (user.Role == UserRole.Doctor)
+                UserRole.Admin => "Admin",
+                UserRole.Doctor => "Doctor",
+                UserRole.Patient => "Patient",
+                _ => "Patient"
+            };
+
+            await _userManager.AddToRoleAsync(user, roleName);
+
+            if (request.Role == UserRole.Doctor)
+            {
+                _context.Doctors.Add(new Doctor
                 {
-                    _context.Doctors.Add(new Doctor { UserId = user.Id, Specialization = "General" });
-                    await _context.SaveChangesAsync(cancellationToken);
-                }
-                return true;
+                    UserId = user.Id,
+                    Specialization = request.Specialization ?? "General",
+                    Bio = string.Empty
+                });
+                await _context.SaveChangesAsync(cancellationToken);
             }
-            return false;
+
+            return true;
         }
     }
 }

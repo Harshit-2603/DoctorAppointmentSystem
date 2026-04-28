@@ -8,6 +8,14 @@ namespace DoctorAppointmentSystem.Controllers
     {
         public IActionResult Index()
         {
+            if (User.IsInRole("Admin"))
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+            if (User.IsInRole("Patient"))
+            {
+                return RedirectToAction("Index", "Patient");
+            }
             return View();
         }
 
