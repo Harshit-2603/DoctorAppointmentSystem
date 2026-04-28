@@ -1,0 +1,21 @@
+@model List<AppointmentSystem.Models.Models.Appointment>
+<h2>Your Bookings</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Appointment Time</th>
+            <th>Patient</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.AppointmentDateTime.ToString("f")</td>
+                <td>@item.Patient?.FullName</td>
+                <td><span class="badge bg-primary">@item.Status</span></td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,78 @@
+@using AppointmentSystem.Models.Models
+@model IEnumerable<ApplicationUser>
+
+@{
+    ViewData["Title"] = "Find a Doctor";
+}
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary">Book an Appointment</h1>
+        <p class="lead text-muted">Select one of our General Practice doctors to view available time slots.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var doctor in Model)
+            {
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card shadow border-0 h-100">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h5 class="card-title mb-0 text-center">Dr. @doctor.FullName</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <span class="badge bg-info text-dark px-3 py-2">General Practice</span>
+                            </div>
+                            <p class="card-text text-muted">
+                                <i class="bi bi-envelope-fill me-2"></i>@doctor.Email
+                            </p>
+                            <hr />
+                            
+                            @* This form sends doctorId and date to the AvailableSlots action *@
+                            <form asp-action="AvailableSlots" method="get">
+                                <input type="hidden" name="doctorId" value="@doctor.Id" />
+                                
+                                <div class="mb-3 text-start">
+                                    <label class="form-label fw-bold small">Appointment Date</label>
+                                    <input type="date" name="date" class="form-control"
+                                           value="@DateTime.Now.ToString("yyyy-MM-dd")"
+                                           min="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                                    <i class="bi bi-calendar-check me-2"></i>Check Availability
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-md-8">
+                <div class="alert alert-warning text-center shadow-sm" role="alert">
+                    <h4 class="alert-heading">No Doctors Found</h4>
+                    <p class="mb-0">There are currently no General Practice doctors registered in the system. Please check back later.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+        }
+    </style>
+}

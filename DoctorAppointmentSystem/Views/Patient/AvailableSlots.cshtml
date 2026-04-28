@@ -1,0 +1,15 @@
+@model List<AppointmentSystem.Models.Models.Appointment>
+<h2>Select a Time Slot</h2>
+<div class="row">
+    @foreach (var slot in Model)
+    {
+        <div class="col-md-3 mb-2">
+            <form asp-action="Book" method="post">
+                <input type="hidden" name="AppointmentId" value="@slot.Id" />
+                <button type="submit" class="btn btn-outline-success w-100">
+                    @slot.AppointmentDateTime.ToString("t")
+                </button>
+            </form>
+        </div>
+    }
+</div>

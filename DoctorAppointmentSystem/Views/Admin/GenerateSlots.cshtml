@@ -1,0 +1,8 @@
+<form asp-action="GenerateSlots" method="post">
+    <input type="hidden" name="DoctorId" value="@ViewBag.DoctorId" />
+    <div class="form-group">
+        <label>Select Date to Generate Slots</label>
+        <input type="date" name="Date" class="form-control" required />
+    </div>
+    <button type="submit" class="btn btn-warning mt-3">Generate 15min Slots</button>
+</form>
