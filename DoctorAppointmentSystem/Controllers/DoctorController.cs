@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
+using AppointmentSystem.Models.Contracts.CommandRequests.Appointment;
+using AppointmentSystem.Models.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using AppointmentSystem.Models.Contracts.CommandRequests.Appointment;
 
 [Authorize(Roles = "Doctor")]
 public class DoctorController : Controller
@@ -13,10 +14,30 @@ public class DoctorController : Controller
 
     public async Task<IActionResult> Dashboard()
     {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        var doctorId = int.Parse(userIdStr);
-        // Uses the corrected Command returning List<Appointment>
-        var appointments = await _mediator.Send(new GetDoctorBookingsCommand(doctorId));
+        var doctorId = await ResolveDoctorIdAsync();
+        if (doctorId == null) return Forbid();
+
+        var appointments = await _mediator.Send(new GetDoctorBookingsCommand(doctorId.Value));
         return View(appointments);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeStatus(int appointmentId, AppointmentStatus newStatus)
+    {
+        var doctorId = await ResolveDoctorIdAsync();
+        if (doctorId == null) return Forbid();
+
+        var ok = await _mediator.Send(new UpdateAppointmentStatusCommand(appointmentId, doctorId.Value, newStatus));
+        TempData[ok ? "Info" : "Error"] = ok ? "Status updated." : "Could not update status.";
+        return RedirectToAction(nameof(Dashboard));
+    }
+
+    private async Task<int?> ResolveDoctorIdAsync()
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdStr, out var userId)) return null;
+
+        return await _mediator.Send(new GetDoctorByUserIdQuery(userId));
     }
 }

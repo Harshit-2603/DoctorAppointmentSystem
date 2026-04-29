@@ -1,7 +1,22 @@
+@using AppointmentSystem.Models.Models
 @model IEnumerable<AppointmentSystem.Models.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var appointments = ViewBag.Appointments as List<AppointmentSystem.Models.Models.Appointment> ?? new();
+}
+
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-success">@TempData["Info"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
 <h2>User Management</h2>
-<p><a asp-action="Create" class="btn btn-primary">Create New User</a></p>
-<table class="table">
+<p><a asp-action="Create" class="btn btn-primary">+ Create New User</a></p>
+<table class="table table-striped">
     <thead>
         <tr>
             <th>Name</th>
@@ -18,10 +33,10 @@
                 <td>@item.Email</td>
                 <td>@item.Role</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-info">Edit</a> |
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-info">Edit</a>
                     @if (item.Role == UserRole.Doctor)
                     {
-                        <a asp-action="SetAvailability" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Timing</a>
+                        <a asp-action="SetAvailability" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Availability</a>
                         <a asp-action="GenerateSlots" asp-route-id="@item.Id" class="btn btn-sm btn-secondary">Slots</a>
                     }
                     <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Delete</a>
@@ -30,3 +45,49 @@
         }
     </tbody>
 </table>
+
+<hr class="my-5" />
+
+<h2>All Appointments</h2>
+@if (!appointments.Any())
+{
+    <div class="alert alert-info">No appointments have been booked yet.</div>
+}
+else
+{
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>When</th>
+                <th>Doctor</th>
+                <th>Patient</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in appointments)
+            {
+                <tr>
+                    <td>@a.AppointmentDateTime.ToString("g")</td>
+                    <td>Dr. @(a.Doctor?.User?.FullName ?? "—")</td>
+                    <td>@(a.Patient?.FullName ?? "—")</td>
+                    <td><span class="badge bg-secondary">@a.Status</span></td>
+                    <td>
+                        @if (a.Status != AppointmentStatus.Cancelled && a.Status != AppointmentStatus.Completed)
+                        {
+                            <form asp-action="CancelAppointment" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="appointmentId" value="@a.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Cancel this appointment?');">
+                                    Cancel
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

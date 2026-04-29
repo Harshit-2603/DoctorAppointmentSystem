@@ -6,6 +6,9 @@
     <title>@ViewData["Title"] - DocSystem</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    @* ── This line fixes the error ── *@
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <header>
@@ -18,15 +21,21 @@
                         {
                             @if (User.IsInRole("Admin"))
                             {
-                                <li class="nav-item"><a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Manage Users</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Manage Users</a>
+                                </li>
                             }
                             @if (User.IsInRole("Doctor"))
                             {
-                                <li class="nav-item"><a class="nav-link text-dark" asp-controller="Doctor" asp-action="Dashboard">My Bookings</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Doctor" asp-action="Dashboard">My Bookings</a>
+                                </li>
                             }
                             @if (User.IsInRole("Patient"))
                             {
-                                <li class="nav-item"><a class="nav-link text-dark" asp-controller="Patient" asp-action="Index">Book Appointment</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Patient" asp-action="Index">Book Appointment</a>
+                                </li>
                             }
                         }
                     </ul>
@@ -35,6 +44,7 @@
             </div>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -43,7 +53,6 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    @* --- ADDED THIS LINE BELOW --- *@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

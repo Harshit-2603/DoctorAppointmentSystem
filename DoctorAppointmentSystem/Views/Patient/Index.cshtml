@@ -2,47 +2,146 @@
 @model IEnumerable<ApplicationUser>
 
 @{
-    ViewData["Title"] = "Find a Doctor";
+    ViewData["Title"] = "Patient Portal";
+    var myAppointments = ViewBag.MyAppointments as List<AppointmentSystem.Models.Models.Appointment>
+                         ?? new List<AppointmentSystem.Models.Models.Appointment>();
+    var upcoming = myAppointments
+        .Where(a => a.Status != AppointmentStatus.Cancelled
+                 && a.Status != AppointmentStatus.Completed
+                 && a.AppointmentDateTime > DateTime.Now)
+        .OrderBy(a => a.AppointmentDateTime)
+        .ToList();
+    var history = myAppointments.Except(upcoming).ToList();
 }
 
-<div class="container mt-5">
-    <div class="text-center mb-5">
-        <h1 class="display-4 fw-bold text-primary">Book an Appointment</h1>
-        <p class="lead text-muted">Select one of our General Practice doctors to view available time slots.</p>
+<div class="container mt-4">
+
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-success">@TempData["Info"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="text-center mb-4">
+        <h1 class="display-5 fw-bold text-primary">Welcome, @User.Identity?.Name</h1>
+        <p class="lead text-muted">Manage your bookings and find an available doctor.</p>
     </div>
 
-    <div class="row justify-content-center">
+    <!-- ─── My Upcoming Appointments ─── -->
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">My Upcoming Appointments</h4>
+        </div>
+        <div class="card-body">
+            @if (!upcoming.Any())
+            {
+                <p class="text-muted mb-0">You don't have any upcoming appointments. Pick a doctor below to book one.</p>
+            }
+            else
+            {
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Doctor</th>
+                            <th>When</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var appt in upcoming)
+                        {
+                            <tr>
+                                <td>Dr. @(appt.Doctor?.User?.FullName ?? "—")</td>
+                                <td>@appt.AppointmentDateTime.ToString("f")</td>
+                                <td>
+                                    <span class="badge @(appt.Status == AppointmentStatus.Confirmed ? "bg-success" : "bg-secondary")">
+                                        @appt.Status
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <form asp-action="CancelMyAppointment" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="appointmentId" value="@appt.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Cancel this appointment?');">
+                                            Cancel
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <!-- ─── History ─── -->
+    @if (history.Any())
+    {
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Past &amp; Cancelled</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Doctor</th>
+                            <th>When</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var appt in history)
+                        {
+                            <tr>
+                                <td>Dr. @(appt.Doctor?.User?.FullName ?? "—")</td>
+                                <td>@appt.AppointmentDateTime.ToString("f")</td>
+                                <td>
+                                    <span class="badge @(appt.Status switch {
+                                        AppointmentStatus.Completed => "bg-success",
+                                        AppointmentStatus.Cancelled => "bg-danger",
+                                        _ => "bg-secondary"
+                                    })">@appt.Status</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- ─── Find a Doctor ─── -->
+    <h3 class="mb-3">Book a New Appointment</h3>
+    <div class="row">
         @if (Model != null && Model.Any())
         {
             @foreach (var doctor in Model)
             {
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card shadow border-0 h-100">
-                        <div class="card-header bg-primary text-white py-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-info text-white py-3">
                             <h5 class="card-title mb-0 text-center">Dr. @doctor.FullName</h5>
                         </div>
                         <div class="card-body text-center">
-                            <div class="mb-3">
-                                <span class="badge bg-info text-dark px-3 py-2">General Practice</span>
-                            </div>
-                            <p class="card-text text-muted">
-                                <i class="bi bi-envelope-fill me-2"></i>@doctor.Email
-                            </p>
+                            <p class="card-text text-muted small">@doctor.Email</p>
                             <hr />
-                            
-                            @* This form sends doctorId and date to the AvailableSlots action *@
                             <form asp-action="AvailableSlots" method="get">
                                 <input type="hidden" name="doctorId" value="@doctor.Id" />
-                                
                                 <div class="mb-3 text-start">
                                     <label class="form-label fw-bold small">Appointment Date</label>
                                     <input type="date" name="date" class="form-control"
                                            value="@DateTime.Now.ToString("yyyy-MM-dd")"
                                            min="@DateTime.Now.ToString("yyyy-MM-dd")" required />
                                 </div>
-                                
-                                <button type="submit" class="btn btn-primary w-100 shadow-sm">
-                                    <i class="bi bi-calendar-check me-2"></i>Check Availability
+                                <button type="submit" class="btn btn-primary w-100">
+                                    Check Availability
                                 </button>
                             </form>
                         </div>
@@ -53,9 +152,9 @@
         else
         {
             <div class="col-md-8">
-                <div class="alert alert-warning text-center shadow-sm" role="alert">
+                <div class="alert alert-warning text-center" role="alert">
                     <h4 class="alert-heading">No Doctors Found</h4>
-                    <p class="mb-0">There are currently no General Practice doctors registered in the system. Please check back later.</p>
+                    <p class="mb-0">There are currently no doctors registered in the system. Please check back later.</p>
                 </div>
             </div>
         }
@@ -64,15 +163,7 @@
 
 @section Styles {
     <style>
-        .card {
-            transition: transform 0.2s ease-in-out;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .btn-primary {
-            background-color: #0d6efd;
-            border: none;
-        }
+        .card { transition: transform 0.2s ease-in-out; }
+        .card:hover { transform: translateY(-3px); }
     </style>
 }

@@ -1,17 +1,36 @@
-<h2>Set Weekly Schedule</h2>
-<form asp-action="SetAvailability" method="post">
-    <input type="hidden" name="DoctorId" value="@ViewBag.DoctorId" />
-    <div class="mb-3">
-        <label>Day of Week</label>
-        <select name="DayOfWeek" class="form-control" asp-items="Html.GetEnumSelectList<DayOfWeek>()"></select>
+@{
+    ViewData["Title"] = "Set Availability";
+    var doctorName = ViewBag.DoctorName as string ?? "Doctor";
+}
+
+<h2>Set Availability for Dr. @doctorName</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="SetAvailability" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <input type="hidden" name="DoctorId" value="@ViewBag.DoctorId" />
+
+            <div class="mb-3">
+                <label class="form-label">Start (date &amp; time)</label>
+                <input type="datetime-local" name="StartTime" class="form-control" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">End (date &amp; time)</label>
+                <input type="datetime-local" name="EndTime" class="form-control" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Slot length (minutes)</label>
+                <input type="number" name="SlotSizeInMinutes" class="form-control"
+                       value="30" min="5" max="240" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Availability</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
     </div>
-    <div class="mb-3">
-        <label>Start Time</label>
-        <input name="StartTime" type="time" class="form-control" required />
-    </div>
-    <div class="mb-3">
-        <label>End Time</label>
-        <input name="EndTime" type="time" class="form-control" required />
-    </div>
-    <button type="submit" class="btn btn-primary">Save Schedule</button>
-</form>
+</div>

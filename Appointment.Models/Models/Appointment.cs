@@ -22,17 +22,16 @@ namespace AppointmentSystem.Models.Models
         [ForeignKey("DoctorId")]
         public virtual Doctor Doctor { get; set; } = null!;
 
-        [Required]
-        public int PatientId { get; set; }
+        public int? PatientId { get; set; }
 
         [ForeignKey("PatientId")]
-        public virtual ApplicationUser Patient { get; set; } = null!;
+        public virtual ApplicationUser? Patient { get; set; }
 
         [Required]
         public DateTime AppointmentDateTime { get; set; }
 
         [Required]
-        public AppointmentStatus Status { get; set; } = AppointmentStatus.Confirmed;
+        public AppointmentStatus Status { get; set; } = AppointmentStatus.Pending;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

@@ -1,8 +1,58 @@
-<form asp-action="GenerateSlots" method="post">
-    <input type="hidden" name="DoctorId" value="@ViewBag.DoctorId" />
-    <div class="form-group">
-        <label>Select Date to Generate Slots</label>
-        <input type="date" name="Date" class="form-control" required />
-    </div>
-    <button type="submit" class="btn btn-warning mt-3">Generate 15min Slots</button>
-</form>
+@model List<AppointmentSystem.Models.Models.Availability>
+@{
+    ViewData["Title"] = "Generate Slots";
+    var doctorName = ViewBag.DoctorName as string ?? "Doctor";
+    var doctorId = (int)ViewBag.DoctorId;
+}
+
+<h2>Generate Slots — Dr. @doctorName</h2>
+
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-success">@TempData["Info"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<p>
+    <a asp-action="SetAvailability" asp-route-id="@doctorId" class="btn btn-outline-primary">
+        + Add another availability window
+    </a>
+    <a asp-action="Index" class="btn btn-secondary">Back to users</a>
+</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">No availability windows defined for this doctor yet.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Window</th>
+                <th>Slot length</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td>@a.StartTime.ToString("g") &mdash; @a.EndTime.ToString("g")</td>
+                    <td>@a.SlotSizeInMinutes min</td>
+                    <td>
+                        <form asp-action="GenerateSlots" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="availabilityId" value="@a.Id" />
+                            <input type="hidden" name="doctorId" value="@doctorId" />
+                            <button type="submit" class="btn btn-sm btn-warning">Generate slots</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

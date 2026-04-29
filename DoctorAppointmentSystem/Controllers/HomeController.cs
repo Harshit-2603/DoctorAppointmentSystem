@@ -12,6 +12,10 @@ namespace DoctorAppointmentSystem.Controllers
             {
                 return RedirectToAction("Index", "Admin");
             }
+            if (User.IsInRole("Doctor"))
+            {
+                return RedirectToAction("Dashboard", "Doctor");
+            }
             if (User.IsInRole("Patient"))
             {
                 return RedirectToAction("Index", "Patient");
