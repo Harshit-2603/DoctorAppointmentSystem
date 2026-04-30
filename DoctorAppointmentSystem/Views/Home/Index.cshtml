@@ -1,8 +1,58 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Welcome to DocSystem";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 75vh;">
+    <div class="row w-100 justify-content-center">
+        <div class="col-lg-6 text-center">
+            <!-- Branding Section -->
+            <div class="mb-5">
+                <div class="display-1 text-primary mb-3">
+                    <i class="bi bi-hospital"></i>
+                </div>
+                <h1 class="display-3 fw-bold tracking-tight text-dark">DocSystem</h1>
+                <p class="lead text-muted px-lg-5">
+                    A streamlined medical appointment platform for General Practice. 
+                    Manage schedules, book slots, and connect with healthcare providers efficiently.
+                </p>
+            </div>
+
+            <!-- Action Section: Login and Register -->
+            <div class="d-grid gap-3 d-sm-flex justify-content-sm-center mb-5">
+                <a asp-area="Identity" asp-page="/Account/Login" 
+                   class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-sm fw-bold">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login to Portal
+                </a>
+                <a asp-area="Identity" asp-page="/Account/Register" 
+                   class="btn btn-outline-dark btn-lg px-5 py-3 rounded-pill fw-bold">
+                    <i class="bi bi-pencil-square me-2"></i>Register Now
+                </a>
+            </div>
+
+            
+            
+        </div>
+    </div>
 </div>
+
+@section Styles {
+    <style>
+        body {
+            background: radial-gradient(circle at top right, #f0f7ff 0%, #ffffff 100%);
+        }
+        .tracking-tight { letter-spacing: -2px; }
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0a58ca;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(13, 110, 253, 0.2) !important;
+        }
+        .btn-outline-dark:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+}
